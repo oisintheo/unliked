@@ -1,0 +1,48 @@
+{
+  "name": "unliked",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "turbo": "turbo",
+    "build": "turbo run build",
+    "build:packages": "turbo run build --filter=./packages/*",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "lint:report": "turbo run lint:report",
+    "lint:fix": "turbo run lint:fix",
+    "typecheck": "turbo run typecheck",
+    "preview": "turbo run preview",
+    "cleanup-preview": "turbo run cleanup-preview",
+    "deploy": "turbo run deploy",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "test": "turbo run test",
+    "e2e": "turbo run e2e",
+    "format:write": "turbo run format:write",
+    "format:check": "turbo run format:check",
+    "generate": "turbo run generate",
+    "clear-branches": "git branch --merged | egrep -v \"(^\\*|production|dev|main)\" | xargs git branch -d",
+    "reset-git": "git checkout main && git pull && pnpm run clear-branches",
+    "merge-main": "git fetch origin main:main && git merge main",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "17.4.0",
+    "@commitlint/config-conventional": "17.4.0",
+    "@egoist/get-packages": "1.0.1",
+    "dotenv": "^16.0.3",
+    "dotenv-cli": "^7.0.0",
+    "eslint": "8.32.0",
+    "husky": "8.0.1",
+    "prettier": "2.8.0",
+    "turbo": "1.7.0"
+  },
+  "engines": {
+    "pnpm": "7",
+    "node": "19"
+  },
+  "packageManager": "pnpm@7.25.0"
+}
