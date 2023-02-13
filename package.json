@@ -42,7 +42,7 @@
   },
   "engines": {
     "pnpm": "7",
-    "node": "19"
+    "node": "18"
   },
   "packageManager": "pnpm@7.25.0"
 }
