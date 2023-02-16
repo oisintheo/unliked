@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-require('dotenv').config({ path: '../../.env.local' });
+require('dotenv').config({ path: `../../.env.${process.env.NODE_ENV}` });
 
 const nextConfig = {
   reactStrictMode: true,

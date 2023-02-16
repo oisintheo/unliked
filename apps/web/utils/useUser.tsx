@@ -5,6 +5,7 @@ import {
   User,
 } from '@supabase/auth-helpers-react';
 import { UserDetails } from 'types';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 type UserContextType = {
   accessToken: string | null;
@@ -28,32 +29,57 @@ export const MyUserContextProvider = (props: Props) => {
     supabaseClient: supabase,
   } = useSessionContext();
   const user = useSupaUser();
+  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
   const accessToken = session?.access_token ?? null;
   const [isLoadingData, setIsloadingData] = useState(false);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
 
-  const getUserDetails = () =>
-    supabase
+  async function listenToUserProfileChanges(userId: string) {
+    const { data } = await supabase
       .from('user_profiles')
       .select('*')
-      .filter('user_id', 'eq', session?.user.id)
-      .single();
+      .filter('user_id', 'eq', userId);
+
+    setUserDetails(data?.[0]);
+    setIsloadingData(false);
+    return supabase
+      .channel(`public:user_profiles`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_profiles',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          setUserDetails(payload.new as UserDetails);
+        },
+      )
+      .subscribe();
+  }
 
   useEffect(() => {
-    if (user && !isLoadingData && !userDetails) {
-      setIsloadingData(true);
-      Promise.allSettled([getUserDetails()]).then((results) => {
-        const userDetailsPromise = results[0];
-
-        if (userDetailsPromise.status === 'fulfilled')
-          setUserDetails(userDetailsPromise.value.data);
-
-        setIsloadingData(false);
-      });
-    } else if (!user && !isLoadingUser && !isLoadingData) {
+    supabase.auth.onAuthStateChange((_event) => {
       setUserDetails(null);
+    });
+
+    if (session?.user && !userDetails) {
+      setIsloadingData(true);
+
+      listenToUserProfileChanges(session.user.id).then((newChannel) => {
+        if (newChannel) {
+          if (channel) {
+            channel.unsubscribe();
+          }
+          setChannel(newChannel);
+        }
+      });
+    } else if (!session?.user) {
+      channel?.unsubscribe();
+      setChannel(null);
     }
-  }, [user, isLoadingUser]);
+  }, [session]);
 
   const value = {
     accessToken,
